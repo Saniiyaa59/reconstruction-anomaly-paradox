@@ -2,26 +2,22 @@
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-NORMAL_CLASS = 1
-ANOMALY_CLASSES = [2, 3, 4, 5]
-
-
 def reconstruction_error(X, X_hat):
     """Per-sample mean squared error."""
     return ((X - X_hat) ** 2).mean(axis=1)
 
 
-def summarize(scores, y):
+def summarize(scores, y, normal_class):
     """Metrics for one sweep setting, given per-sample anomaly scores and class labels."""
-    is_anomaly = y != NORMAL_CLASS
+    is_anomaly = y != normal_class
     row = {
         "normal_err": scores[~is_anomaly].mean(),
         "anomaly_err": scores[is_anomaly].mean(),
         "auroc": roc_auc_score(is_anomaly, scores),
     }
-    # AUROC of each anomaly class against the normal test beats
-    for c in ANOMALY_CLASSES:
-        mask = (y == NORMAL_CLASS) | (y == c)
+    # AUROC of each anomaly class against the normal test samples
+    for c in np.unique(y[is_anomaly]):
+        mask = (y == normal_class) | (y == c)
         row[f"auroc_class{c}"] = roc_auc_score(y[mask] == c, scores[mask])
     return row
 
